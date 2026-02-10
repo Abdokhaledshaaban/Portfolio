@@ -1,0 +1,86 @@
+[
+  {
+    "title": "Excel Learning Platform",
+    "description": "Educational platform to learn Excel with video lessons.",
+    "image": "img/image.png",
+    "technologies": ["HTML", "CSS", "JavaScript", "Python", "Django"],
+    "live": "https://abdokhaledshaaban.github.io/Data-Cell/index.html#"
+  },
+  {
+    "title": "Cruds APP",
+    "description": "Modern Cruds website.",
+    "image": "img/crud.png",
+    "technologies": ["HTML", "CSS", "JS"],
+    "live": "plays/cruds.html"
+  },
+  {
+    "title": "Web Site With HTML & CSS",
+    "description": "Web app with using HTML & CSS.",
+    "image": "img/html & css.png",
+    "technologies": ["HTML", "CSS"],
+    "live": "https://abdokhaledshaaban.github.io/html-css-site/"
+  },
+  {
+    "title": "برنامج مصحف",
+    "description": "برنامج مصحف لتشغيل ايات القرءان بأصوات الشيوخ وتكرار الايات",
+    "image": "img/mushafi.png",
+    "technologies": ["HTML", "CSS", "JS"],
+    "live": "https://abdokhaledshaaban.github.io/MUSHAFI/"
+  },
+  {
+    "title": "E-Commerce",
+    "description": "An E-Commerce online shopping.",
+    "image": "img/online shop.png",
+    "technologies": ["HTML", "CSS", "JS"],
+    "live": "https://abdokhaledshaaban.github.io/Online-shop/"
+  },
+  {
+    "title": "Ball Play",
+    "description": "A Small Play with ball.",
+    "image": "img/ball.png",
+    "technologies": ["HTML", "CSS", "JS"],
+    "live": "plays/ball.html"
+  },
+  {
+    "title": "Calculator App",
+    "description": "",
+    "image": "img/calculator.png",
+    "technologies": ["HTML", "CSS", "JS"],
+    "live": "plays/calculator.html"
+  },
+  {
+    "title": "Calculator App 2",
+    "description": "",
+    "image": "img/calculator 2.png",
+    "technologies": ["HTML", "CSS", "JS"],
+    "live": "plays/calculator 2.html"
+  },
+  {
+    "title": "A memory game",
+    "description": "",
+    "image": "img/memory game.png",
+    "technologies": ["HTML", "CSS", "JS"],
+    "live": "plays/cards.html"
+  },
+  {
+    "title": "Dino Jump Game",
+    "description": "",
+    "image": "img/dino game.png",
+    "technologies": ["HTML", "CSS", "JS"],
+    "live": "plays/dino game.html"
+  },
+  {
+    "title": "X,O Game",
+    "description": "",
+    "image": "img/x,o.png",
+    "technologies": ["HTML", "CSS", "JS"],
+    "live": "plays/x o.html"
+  },
+  {
+    "title": "Guess the Number Game",
+    "description": "",
+    "image": "img/تخمين الرقم.png",
+    "technologies": ["HTML", "CSS", "JS"],
+    "live": "plays/تخمين الرقم.html"
+  }
+]

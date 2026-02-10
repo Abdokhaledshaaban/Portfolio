@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="cruds.css" />
+  <title>cruds</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #222;
+      color: white;
+      font-family: system-ui;
+    }
+
+    .crud {
+      width: 80%;
+      margin: auto;
+    }
+
+    .head {
+      text-align: center;
+      text-transform: uppercase;
+      margin: 10px 0;
+    }
+
+    input {
+      background-color: #111;
+      width: 95%;
+      height: 2rem;
+      outline: 0;
+      border: 0;
+      color: white;
+      margin: 4px 0;
+      padding: 4px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    input:focus {
+      background: #000;
+      transform: scale(1.1);
+    }
+
+    .prices input {
+      width: 20%;
+    }
+
+    .total {
+      font-size: 11px;
+      background-color: red;
+      border: 0;
+      padding: 5px 3px;
+      border-radius: 4px;
+      margin: 3px;
+    }
+
+    .total::before {
+      content: 'total : ';
+    }
+
+    button {
+      text-transform: uppercase;
+      width: 95%;
+      height: 2rem;
+      border: 0;
+      cursor: pointer;
+      background: #390053;
+      color: white;
+      border-radius: 20px;
+      transition: 0.5s;
+    }
+
+    button:hover {
+      background: #51025f;
+      letter-spacing: 2px;
+    }
+
+    .deleteAll {
+      margin: 5px 0;
+    }
+
+    .searchbtn {
+      width: 95%;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .searchbtn button {
+      width: 45%;
+    }
+
+    table {
+      width: 100%;
+      text-align: center;
+      margin: 10px 0;
+    }
+
+    @media (max-width: 600px) {
+      .crud {
+        width: 97%;
+      }
+
+      .prices {
+        flex-direction: column;
+      }
+
+      .prices input {
+        width: 95%;
+      }
+
+      input:focus {
+        transform: scale(1);
+      }
+
+      .searchbtn {
+        flex-direction: column;
+      }
+
+      .searchbtn button {
+        width: 100%;
+      }
+
+      table {
+        font-size: 12px;
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        flex-wrap: 5px;
+        padding: 0;
+        margin: 0;
+      }
+
+      th,
+      td {
+        padding: 3px;
+        font-size: 12px;
+      }
+
+      .class {
+        padding: 0 5px;
+      }
+
+      input {
+        font-size: 14px;
+      }
+
+      button {
+        font-size: 14px;
+      }
+
+      table button {
+        font-size: 11px;
+        padding: 5px 8px;
+        width: 100%;
+        box-sizing: border-box;
+        white-space: nowrap;
+        text-transform: lowercase;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="crud">
+    <div class="head">
+      <h1>cruds</h1>
+      <p>product managment system</p>
+    </div>
+
+    <div class="input">
+      <input type="text" placeholder="title" class="title" />
+      <div class="prices">
+        <input onkeyup="getTotal()" type="number" placeholder="PRICE" class="price" />
+        <input onkeyup="getTotal()" type="number" placeholder="taxes" class="taxes" />
+        <input onkeyup="getTotal()" type="number" placeholder="ads" class="ads" />
+        <input onkeyup="getTotal()" type="number" placeholder="discount" class="discount" />
+        <small class="total">0</small>
+      </div>
+      <input type="number" placeholder="count" class="count" />
+      <input type="text" placeholder="category" class="category" />
+      <button class="creat">CREAT</button>
+    </div>
+
+    <div class="output">
+      <div class="searchblock">
+        <input onkeyup="searchData(this.value)" type="text" placeholder="search" class="search" />
+        <div class="searchbtn">
+          <button onclick="searchMood(this.id)" id="search by title" class="SEARCH BY TITLE">
+            SEARCH BY TITLE
+          </button>
+          <button onclick="searchMood(this.id)" id="search by category" class="SEARCH BY CATEGORY">
+            SEARCH BY CATEGORY
+          </button>
+        </div>
+      </div>
+      <div class="deleteAll"></div>
+      <table>
+        <tr>
+          <th>Id</th>
+          <th>Title</th>
+          <th>Price</th>
+          <th>Taxes</th>
+          <th>Ads</th>
+          <th>Disc.</th>
+          <th>Total</th>
+          <th>Categ.</th>
+          <th>Update</th>
+          <th class="class">Delete</th>
+        </tr>
+        <tbody class="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let title = document.getElementsByClassName('title')[0];
+    let price = document.getElementsByClassName('price')[0];
+    let taxes = document.getElementsByClassName('taxes')[0];
+    let ads = document.getElementsByClassName('ads')[0];
+    let discount = document.getElementsByClassName('discount')[0];
+    let total = document.getElementsByClassName('total')[0];
+    let count = document.getElementsByClassName('count')[0];
+    let category = document.getElementsByClassName('category')[0];
+    let creat = document.getElementsByClassName('creat')[0];
+
+
+
+    let mood = 'create';
+    let tmp;
+
+    onload = function () {
+      title.focus();
+    }
+
+    // get total
+
+    function getTotal() {
+      if (price.value != '') {
+        let result = (+price.value + +taxes.value + +ads.value)
+          - +discount.value;
+        total.innerHTML = result;
+        total.style.background = '#040'
+      }
+    }
+
+    // creat product
+
+    let datapro;
+
+    if (localStorage.product != null) {
+      datapro = JSON.parse(localStorage.product)
+    } else {
+      datapro = [];
+    }
+
+    creat.onclick = function () {
+      let collection = {
+        title: title.value.toLowerCase(),
+        price: price.value,
+        taxes: taxes.value,
+        ads: ads.value,
+        discount: discount.value,
+        total: total.innerHTML,
+        count: count.value,
+        category: category.value.toLowerCase(),
+      }
+
+      if (title.value != ''
+        && price.value != ''
+        && category.value != ''
+        && collection.count < 101) {
+
+        if (mood === 'create') {
+          if (collection.count > 1) {
+            for (let i = 0; i < collection.count; i++) {
+              datapro.push(collection)
+            }
+          } else {
+            datapro.push(collection)
+          }
+        } else {
+          datapro[tmp] = collection
+          mood = 'create';
+          creat.innerHTML = 'creat'
+          count.style.display = 'block'
+        }
+        clearData()
+      }
+
+
+
+      localStorage.setItem('product', JSON.stringify(datapro))
+      readData()
+    }
+
+    // clear data
+
+    function clearData() {
+      if (title) title.value = '';
+      if (price) price.value = '';
+      if (taxes) taxes.value = '';
+      if (ads) ads.value = '';
+      if (discount) discount.value = '';
+      if (total) total.innerHTML = '';
+      if (count) count.value = '';
+      if (category) category.value = '';
+    }
+
+    // read data
+
+    function readData() {
+      getTotal()
+      let table = '';
+      for (let i = 0; i < datapro.length; i++) {
+        table += `
+        <tr>
+            <td>${i + 1}</td>
+            <td>${datapro[i].title}</td>
+            <td>${datapro[i].price}</td>
+            <td>${datapro[i].taxes}</td>
+            <td>${datapro[i].ads}</td>
+            <td>${datapro[i].discount}</td>
+            <td>${datapro[i].total}</td>
+            <td>${datapro[i].category}</td>
+            <td><button onclick="updateData(${i})" class="update">update</button></td>
+            <td><button onclick= "deleteData( ${i} )" class="delete">delete</button></td>
+        </tr>
+        `;
+      }
+      document.getElementsByClassName('tbody')[0].innerHTML = table;
+      let deleteAll = document.getElementsByClassName('deleteAll')[0];
+      if (datapro.length > 0) {
+        deleteAll.innerHTML = `
+        <button onclick="deleteAll()" class="deleteAll">deleteAll (${datapro.length}) </button>
+        `
+      } else {
+        deleteAll.innerHTML = '';
+      }
+    }
+    readData()
+
+    // delete
+
+    function deleteData(i) {
+      datapro.splice(i, 1);
+      localStorage.product = JSON.stringify(datapro);
+      readData()
+    }
+
+    // deleteAll
+
+    function deleteAll() {
+      localStorage.clear()
+      datapro.splice(0)
+      readData()
+    }
+
+    // update
+
+    function updateData(i) {
+      title.value = datapro[i].title
+      price.value = datapro[i].price
+      taxes.value = datapro[i].taxes
+      ads.value = datapro[i].ads
+      discount.value = datapro[i].discount
+      count.style.display = 'none';
+      category.value = datapro[i].category
+      creat.innerHTML = 'update'
+      mood = 'update'
+      tmp = [i]
+      getTotal()
+      scroll({
+        top: 0,
+        behavior: 'smooth'
+      })
+    }
+
+
+    // search
+
+    let search = 'title';
+
+    function searchMood(id) {
+      let searchbtn = document.getElementsByClassName('search')[0];
+      if (id == 'search by title') {
+        search = 'title';
+        searchbtn.placeholder = 'search by title';
+      } else {
+        search = 'category';
+        searchbtn.placeholder = 'search by category';
+      }
+      searchbtn.focus()
+      searchbtn.value = '';
+      readData()
+    }
+
+    function searchData(value) {
+      let table = '';
+      if (search == 'title') {
+        for (let i = 0; i < datapro.length; i++) {
+          if (datapro[i].title.includes(value.toLowerCase())) {
+
+            table += `
+        <tr>
+            <td>${i}</td>
+            <td>${datapro[i].title}</td>
+            <td>${datapro[i].price}</td>
+            <td>${datapro[i].taxes}</td>
+            <td>${datapro[i].ads}</td>
+            <td>${datapro[i].discount}</td>
+            <td>${datapro[i].total}</td>
+            <td>${datapro[i].category}</td>
+            <td><button onclick="updateData(${i})" class="update">update</button></td>
+            <td><button onclick= "deleteData( ${i} )" class="delete">delete</button></td>
+        </tr>
+        `;
+
+          }
+        }
+
+
+      } else {
+
+        for (let i = 0; i < datapro.length; i++) {
+          if (datapro[i].category.includes(value.toLowerCase())) {
+
+            table += `
+        <tr>
+            <td>${i}</td>
+            <td>${datapro[i].title}</td>
+            <td>${datapro[i].price}</td>
+            <td>${datapro[i].taxes}</td>
+            <td>${datapro[i].ads}</td>
+            <td>${datapro[i].discount}</td>
+            <td>${datapro[i].total}</td>
+            <td>${datapro[i].category}</td>
+            <td><button onclick="updateData(${i})" class="update">update</button></td>
+            <td><button onclick= "deleteData( ${i} )" class="delete">delete</button></td>
+        </tr>
+        `;
+
+          }
+        }
+      }
+      document.getElementsByClassName('tbody')[0].innerHTML = table;
+    }
+
+    // cleanData
+
+
+  </script>
+</body>
+
+</html>

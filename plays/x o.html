@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ar">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>لعبة X O</title>
+    <style>
+        :root {
+            --bg: #0f1724;
+            --card: #0b1220;
+            --accent: #06b6d4;
+            --muted: #9aa4b2;
+            --size: clamp(220px, 40vmin, 360px);
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans", Tahoma;
+            background: linear-gradient(180deg, #021026 0%, #071426 100%);
+            color: #e6eef6;
+            padding: 20px;
+        }
+
+        .card {
+            width: var(--size);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 8px 30px rgba(2, 6, 23, 0.7);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            letter-spacing: 0.2px
+        }
+
+        .status {
+            font-size: 0.93rem;
+            color: var(--muted)
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .cell {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), rgba(255, 255, 255, 0.00));
+            border-radius: 10px;
+            aspect-ratio: 1/1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(32px, 8vmin, 48px);
+            cursor: pointer;
+            user-select: none;
+            transition: transform .08s ease, box-shadow .08s;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .cell:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px rgba(3, 10, 20, 0.6)
+        }
+
+        .cell.disabled {
+            cursor: not-allowed;
+            opacity: 0.9;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 8px;
+            align-items: center;
+        }
+
+        button {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: var(--accent);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button.primary {
+            background: var(--accent);
+            color: #022;
+            border: none;
+            font-weight: 600;
+        }
+
+        .scores {
+            font-size: 0.9rem;
+            color: var(--muted)
+        }
+
+        .win {
+            background: linear-gradient(90deg, rgba(6, 182, 212, 0.18), rgba(6, 182, 212, 0.06));
+            border: 1px solid rgba(6, 182, 212, 0.22);
+        }
+
+        @media (max-width:420px) {
+            .card {
+                padding: 14px
+            }
+
+            .cell {
+                font-size: clamp(28px, 10vmin, 40px)
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="card" role="application" aria-label="لعبة اكس او">
+        <div class="header">
+            <div>
+                <div class="title">لعبة X O</div>
+                <div id="status" class="status">دور X</div>
+            </div>
+            <div class="scores" id="scores">X: 0 • O: 0 • تعادلات: 0</div>
+        </div>
+
+        <div id="grid" class="grid" aria-live="polite">
+            <!-- 9 خلايا تتولد بالـ JavaScript -->
+        </div>
+
+        <div class="controls">
+            <button id="undoBtn" title="التراجع" disabled>تراجع</button>
+            <div style="flex:1;text-align:center;">
+                <button id="restartBtn" class="primary">ابدأ لعبة جديدة</button>
+            </div>
+            <button id="resetScoresBtn" title="إعادة تعيين النقاط">إعادة نقاط</button>
+        </div>
+    </main>
+
+    <script>
+        // ===== حالة اللعبة (state) =====
+        const state = {
+            board: Array(9).fill(null), // مصفوفة تمثل 9 خلايا، كل عنصر يكون 'X' أو 'O' أو null
+            turn: 'X',                  // الدور الحالي
+            running: true,              // هل اللعبة قيد التشغيل
+            scores: { X: 0, O: 0, ties: 0 }, // عداد النتائج
+            history: []                 // لتفعيل التراجع (stack)
+        };
+
+        // ===== ثوابت =====
+        const WIN_COMBOS = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // صفوف
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // أعمدة
+            [0, 4, 8], [2, 4, 6]          // قطريات
+        ];
+
+        // ===== عناصر DOM =====
+        const gridEl = document.getElementById('grid');
+        const statusEl = document.getElementById('status');
+        const scoresEl = document.getElementById('scores');
+        const restartBtn = document.getElementById('restartBtn');
+        const resetScoresBtn = document.getElementById('resetScoresBtn');
+        const undoBtn = document.getElementById('undoBtn');
+
+        // ===== تهيئة الشبكة (إنشاء الخلايا) =====
+        function createGrid() {
+            gridEl.innerHTML = '';
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.index = i; // index لتمييز الخلايا
+                cell.setAttribute('role', 'button');
+                cell.setAttribute('aria-label', `خلية ${i + 1}`);
+                cell.addEventListener('click', onCellClick);
+                gridEl.appendChild(cell);
+            }
+            render();
+        }
+
+        // ===== رسم الحالة على الواجهة =====
+        function render() {
+            // عرض محتوى الخلايا
+            const cells = gridEl.querySelectorAll('.cell');
+            cells.forEach((cell, idx) => {
+                const v = state.board[idx];
+                cell.textContent = v ? v : '';
+                cell.classList.toggle('disabled', !!v || !state.running);
+                cell.classList.remove('win');
+            });
+
+            // نص الحالة
+            if (!state.running) {
+                statusEl.textContent = 'انتهت اللعبة';
+            } else {
+                statusEl.textContent = `دور ${state.turn}`;
+            }
+
+            // عرض النقاط
+            scoresEl.textContent = `X: ${state.scores.X} • O: ${state.scores.O} • تعادلات: ${state.scores.ties}`;
+
+            // تفعيل/تعطيل زر التراجع
+            undoBtn.disabled = state.history.length === 0;
+        }
+
+        // ===== عند الضغط على خلية =====
+        function onCellClick(e) {
+            const idx = Number(e.currentTarget.dataset.index);
+            if (!state.running) return;
+            if (state.board[idx]) return; // منع الكتابة فوق خلية مشغولة
+
+            // حفظ في التاريخ (للتراجع)
+            state.history.push({
+                board: [...state.board],
+                turn: state.turn
+            });
+
+            // ضع العلامة
+            state.board[idx] = state.turn;
+            // افحص فوز أو تعادل
+            const winInfo = checkWin();
+            if (winInfo) {
+                // فوز
+                state.running = false;
+                state.scores[winInfo.winner] += 1;
+                // ظلل الخلايا الفائزة
+                for (const i of winInfo.combo) {
+                    const cell = gridEl.querySelector(`.cell[data-index="${i}"]`);
+                    if (cell) cell.classList.add('win');
+                }
+                statusEl.textContent = `فاز ${winInfo.winner}!`;
+            } else if (checkDraw()) {
+                state.running = false;
+                state.scores.ties += 1;
+                statusEl.textContent = 'تعادل';
+            } else {
+                // تبديل الدور
+                state.turn = state.turn === 'X' ? 'O' : 'X';
+            }
+
+            render();
+        }
+
+        // ===== فحص الفوز =====
+        // يعيد { winner: 'X'|'O', combo: [i,j,k] } أو null
+        function checkWin() {
+            for (const combo of WIN_COMBOS) {
+                const [a, b, c] = combo;
+                const v = state.board[a];
+                if (v && v === state.board[b] && v === state.board[c]) {
+                    return { winner: v, combo };
+                }
+            }
+            return null;
+        }
+
+        // ===== فحص التعادل =====
+        function checkDraw() {
+            return state.board.every(cell => cell !== null);
+        }
+
+        // ===== إعادة التشغيل (لا تمسح النقاط) =====
+        function restartGame() {
+            state.board = Array(9).fill(null);
+            state.turn = 'X';
+            state.running = true;
+            state.history = [];
+            render();
+        }
+
+        // ===== إعادة تعيين النقاط + إعادة اللعبة =====
+        function resetScores() {
+            state.scores = { X: 0, O: 0, ties: 0 };
+            restartGame();
+        }
+
+        // ===== تراجع خطوة (undo) =====
+        function undo() {
+            if (state.history.length === 0) return;
+            const last = state.history.pop();
+            state.board = last.board;
+            state.turn = last.turn;
+            state.running = true;
+            render();
+        }
+
+        // ===== ربط الأحداث =====
+        restartBtn.addEventListener('click', restartGame);
+        resetScoresBtn.addEventListener('click', resetScores);
+        undoBtn.addEventListener('click', undo);
+
+        // ===== ابدأ =====
+        createGrid();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ar">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>🏃‍♂️ Dino Jump - لعبة القفز</title>
+    <style>
+      :root {
+        --bg: #f7f7f7;
+        --ground: #666;
+        --dino: #222;
+        --ob: #c0392b;
+        --text: #222;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        font-family: 'Cairo', system-ui, Arial;
+        background: linear-gradient(180deg, #e9f0ff, var(--bg));
+        color: var(--text);
+        flex-direction: column;
+      }
+
+      h1 {
+        margin: 12px 0 6px;
+        font-size: 20px;
+      }
+      p.hint {
+        margin: 0 0 12px;
+        color: #555;
+        font-size: 14px;
+      }
+
+      /* صندوق اللعبة */
+      .game-wrap {
+        background: white;
+        padding: 12px;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      canvas {
+        background: linear-gradient(180deg, #fff 0%, #eef6ff 60%);
+        display: block;
+        border-radius: 8px;
+        width: 720px; /* يعرض مُعين لكن يبقى canvas له أبعاد داخلية */
+        max-width: calc(100vw - 40px);
+        height: 200px;
+        touch-action: none;
+      }
+
+      .info {
+        display: flex;
+        gap: 18px;
+        align-items: center;
+        margin-top: 10px;
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .left,
+      .right {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .score-box {
+        background: #f1f5f9;
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-weight: 700;
+      }
+      button {
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        background: #4facfe;
+        color: white;
+        font-weight: 700;
+      }
+      button:active {
+        transform: translateY(1px);
+      }
+      small {
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🏃‍♂️ Dino Jump</h1>
+    <p class="hint">
+      اضغط مسافة أو المس الشاشة للقفز — استمر قدر المستطاع وازد شدة التحدي!
+    </p>
+
+    <div class="game-wrap">
+      <canvas id="game" width="720" height="200"></canvas>
+
+      <div class="info" aria-hidden="false">
+        <div class="left">
+          <div class="score-box" id="score">النقاط: 0</div>
+          <div class="score-box" id="high">الأعلى: 0</div>
+        </div>
+        <div class="right">
+          <small>المستوى يزداد مع الزمن</small>
+          <button id="restartBtn">🔄 إعادة</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ===== إعدادات أساسية =====
+      const canvas = document.getElementById('game');
+      const ctx = canvas.getContext('2d');
+      // لتناسب العرض المتغير نستخدم دقة داخلية ثابتة ثم نُقيّم العرض الظاهر
+      const GAME_WIDTH = 720;
+      const GAME_HEIGHT = 200;
+      canvas.width = GAME_WIDTH;
+      canvas.height = GAME_HEIGHT;
+
+      // عناصر DOM للعرض
+      const scoreEl = document.getElementById('score');
+      const highEl = document.getElementById('high');
+      const restartBtn = document.getElementById('restartBtn');
+
+      // حالة اللعبة
+      let running = true;
+      let gameOver = false;
+
+      // ديناصور (المشغل)
+      const dino = {
+        x: 50,
+        y: GAME_HEIGHT - 40 - 20, // فوق الأرض
+        width: 40,
+        height: 40,
+        vy: 0, // سرعة رأسية
+        gravity: 0.8,
+        jumpPower: -12,
+        grounded: true,
+        color: '#222',
+      };
+
+      // أرض مرئية (خط)
+      const groundY = GAME_HEIGHT - 20;
+
+      // عوائق
+      let obstacles = [];
+      let spawnTimer = 0;
+      let spawnInterval = 90; // إطار تقريبًا (يقل مع الزمن لزيادة الصعوبة)
+
+      // نقاط و مستوى وصعوبة
+      let score = 0;
+      let highScore = Number(localStorage.getItem('dino_high') || 0);
+      highEl.textContent = 'الأعلى: ' + highScore;
+      let speedMultiplier = 1; // يزيد بمرور الوقت
+      let timeSinceStart = 0;
+
+      // إعدادات تحكم
+      let keys = {};
+      window.addEventListener('keydown', (e) => {
+        keys[e.code] = true;
+        // امنع النزول الافتراضي لمسافة في المفاتيح المهمة
+        if (e.code === 'Space' || e.code === 'ArrowUp') e.preventDefault();
+        // القفز بمفتاح المسافة أو السهم الأعلى
+        if (e.code === 'Space' || e.code === 'ArrowUp') tryJump();
+      });
+      window.addEventListener('keyup', (e) => {
+        keys[e.code] = false;
+      });
+
+      // دعم اللمس: النقر/المس للقفز
+      canvas.addEventListener(
+        'touchstart',
+        (e) => {
+          e.preventDefault();
+          tryJump();
+        },
+        { passive: false }
+      );
+      canvas.addEventListener('mousedown', () => tryJump());
+
+      // إعادة تشغيل
+      restartBtn.addEventListener('click', resetGame);
+
+      // ===== دوال اللعبة =====
+      function tryJump() {
+        if (gameOver) return;
+        if (dino.grounded) {
+          dino.vy = dino.jumpPower;
+          dino.grounded = false;
+        }
+      }
+
+      function spawnObstacle() {
+        // ارتفاع وعرض متغيران
+        const widths = [20, 28, 36];
+        const heights = [20, 28, 36, 14];
+        const w = widths[Math.floor(Math.random() * widths.length)];
+        const h = heights[Math.floor(Math.random() * heights.length)];
+        const x = GAME_WIDTH + 10;
+        obstacles.push({
+          x,
+          y: groundY - h,
+          width: w,
+          height: h,
+          passed: false,
+        });
+      }
+
+      function update() {
+        if (gameOver) return;
+
+        // زيادة الوقت والنقاط
+        timeSinceStart++;
+        // نقاط ترتفع مع الوقت
+        if (timeSinceStart % 6 === 0) score++;
+        scoreEl.textContent = 'النقاط: ' + score;
+
+        // تزيد الصعوبة تدريجيًا
+        if (timeSinceStart % 600 === 0) {
+          speedMultiplier += 0.15;
+          // نقص الفاصل الأدنى بين العوائق
+          spawnInterval = Math.max(50, spawnInterval - 5);
+        }
+
+        // ديناميكا القفز (الجاذبية)
+        dino.vy += dino.gravity;
+        dino.y += dino.vy;
+        if (dino.y + dino.height >= groundY) {
+          dino.y = groundY - dino.height;
+          dino.vy = 0;
+          dino.grounded = true;
+        }
+
+        // توليد العوائق
+        spawnTimer++;
+        if (spawnTimer >= spawnInterval) {
+          spawnTimer = 0;
+          spawnObstacle();
+        }
+
+        // تحديث العوائق وتحريكها
+        const baseSpeed = 3;
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+          const ob = obstacles[i];
+          ob.x -= baseSpeed + speedMultiplier;
+          // علامة "عدّى" لزيادة النقاط لو لزم
+          if (!ob.passed && ob.x + ob.width < dino.x) {
+            ob.passed = true;
+          }
+          // إزالة العوائق خارج الشاشة
+          if (ob.x + ob.width < -10) obstacles.splice(i, 1);
+        }
+
+        // تصادم بسيط مستطيل-مستطيل
+        for (let ob of obstacles) {
+          if (rectsOverlap(dino, ob)) {
+            endGame();
+            break;
+          }
+        }
+      }
+
+      function rectsOverlap(a, b) {
+        return !(
+          a.x + a.width < b.x ||
+          a.x > b.x + b.width ||
+          a.y + a.height < b.y ||
+          a.y > b.y + b.height
+        );
+      }
+
+      function draw() {
+        // خلفية
+        ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+        // سمكة أرضية (ظل)
+        ctx.fillStyle = '#e6eefc';
+        ctx.fillRect(0, groundY + 1, GAME_WIDTH, GAME_HEIGHT - groundY);
+
+        // رسم الديناصور
+        ctx.fillStyle = dino.color;
+        // رسم جسم
+        ctx.fillRect(dino.x, dino.y, dino.width, dino.height);
+        // عين بسيطة
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(dino.x + dino.width - 12, dino.y + 8, 6, 6);
+        ctx.fillStyle = '#000';
+        ctx.fillRect(dino.x + dino.width - 10, dino.y + 10, 3, 3);
+
+        // رسم العوائق
+        for (let ob of obstacles) {
+          ctx.fillStyle = '#c0392b';
+          ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
+        }
+
+        // خط الأرض
+        ctx.strokeStyle = '#555';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, groundY);
+        ctx.lineTo(GAME_WIDTH, groundY);
+        ctx.stroke();
+
+        // إذا النهاية
+        if (gameOver) {
+          ctx.fillStyle = 'rgba(0,0,0,0.6)';
+          ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+          ctx.fillStyle = 'white';
+          ctx.textAlign = 'center';
+          ctx.font = '24px Cairo';
+          ctx.fillText(
+            '💀 انتهت اللعبة — اضغط إعادة للعب',
+            GAME_WIDTH / 2,
+            GAME_HEIGHT / 2 - 10
+          );
+          ctx.font = '16px Cairo';
+          ctx.fillText(
+            'المس أو اضغط المسافة للقفز أثناء اللعب',
+            GAME_WIDTH / 2,
+            GAME_HEIGHT / 2 + 18
+          );
+        }
+      }
+
+      // نهاية اللعبة
+      function endGame() {
+        gameOver = true;
+        running = false;
+        // حفظ أعلى نتيجة
+        if (score > highScore) {
+          highScore = score;
+          localStorage.setItem('dino_high', highScore);
+          highEl.textContent = 'الأعلى: ' + highScore;
+        }
+      }
+
+      // إعادة الضبط
+      function resetGame() {
+        obstacles = [];
+        spawnTimer = 0;
+        spawnInterval = 90;
+        score = 0;
+        timeSinceStart = 0;
+        speedMultiplier = 1;
+        gameOver = false;
+        running = true;
+        dino.y = groundY - dino.height;
+        dino.vy = 0;
+        dino.grounded = true;
+        scoreEl.textContent = 'النقاط: 0';
+        // ابدأ الحلقة من جديد
+        requestAnimationFrame(loop);
+      }
+
+      // حلقة اللعبة
+      function loop() {
+        if (!running) return;
+        update();
+        draw();
+        if (!gameOver) requestAnimationFrame(loop);
+      }
+
+      // ابدأ اللعبة لأول مرة
+      requestAnimationFrame(loop);
+
+      // اختصار: اضغط مسافة لإعادة بعد الموت (لو حبيت)
+      window.addEventListener('keydown', (e) => {
+        if (gameOver && e.code === 'Space') resetGame();
+      });
+
+      // ملاحظات صغيرة: ضبط الحجم البصري ليتوافق مع العرض الحقيقي
+      function fitCanvasToDisplay() {
+        // هنا نترك canvas بعرض ثابت داخل CSS؛ نستخدم تحجيم devicePixelRatio لو أردت دقة أعلى
+        const ratio = window.devicePixelRatio || 1;
+        canvas.style.height =
+          canvas.height * (canvas.clientWidth / canvas.width) + 'px';
+      }
+      fitCanvasToDisplay();
+      window.addEventListener('resize', fitCanvasToDisplay);
+    </script>
+  </body>
+</html>
