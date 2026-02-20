@@ -125,3 +125,23 @@ document.getElementById('contactForm').addEventListener('submit', function (e) {
       alert('Failed to send message, try again!');
     });
 });
+
+let darkmode = localStorage.getItem('darkmode');
+const themeSwitch = document.getElementById('theme-switch');
+
+function enabledarkmode() {
+  document.body.classList.add('darkmode');
+  localStorage.setItem('darkmode', 'active');
+}
+
+function disabledarkmode() {
+  document.body.classList.remove('darkmode');
+  localStorage.setItem('darkmode', null);
+}
+
+if (darkmode === 'active') enabledarkmode();
+
+themeSwitch.addEventListener('click', () => {
+  darkmode = localStorage.getItem('darkmode');
+  darkmode !== 'active' ? enabledarkmode() : disabledarkmode();
+});

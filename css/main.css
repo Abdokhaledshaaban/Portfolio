@@ -1,10 +1,60 @@
-/* General */
+:root {
+  --base-color: white;
+  --base-variant: #e8e9ed;
+  --text-color: #111528;
+  --secondary-text: #232738;
+  --primary-color: #3a435d;
+  --accent-color: #0071ff;
+  --color: black;
+}
+
+.darkmode {
+  --base-color: #070b1d;
+  --base-variant: #101425;
+  --text-color: #ffffff;
+  --secondary-text: #a4a5b8;
+  --primary-color: #3a435d;
+  --accent-color: #0071ff;
+  --color: white;
+}
+
 body {
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #0a0f1c;
-  color: #ffffff;
+  min-height: 100vh;
+  background-color: var(--base-color);
+  color: var(--text-color);
   scroll-behavior: smooth;
 }
+
+#theme-switch {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  border: 0;
+  outline: 0;
+  background-color: var(--base-variant);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#theme-switch i {
+  font-size: 24px;
+  color: var(--primary-color);
+}
+
+#theme-switch i:last-child {
+  display: none;
+}
+
+.darkmode #theme-switch i:first-child {
+  display: none;
+}
+
+.darkmode #theme-switch i:last-child {
+  display: block;
+}
+
+/* General */
 
 img {
   pointer-events: none;
@@ -14,18 +64,19 @@ img {
 
 /* Navbar */
 .navbar {
-  background-color: rgba(10, 15, 28, 0.9) !important;
+  background-color: var(--base-variant) !important;
   backdrop-filter: blur(10px);
   transition: 0.3s;
 }
 
 .navbar-brand {
+  color: var(--text-color) !important;
   font-weight: bold;
   letter-spacing: 1px;
 }
 
 .nav-link {
-  color: #cbd5e1 !important;
+  color: var(--text-color) !important;
   transition: 0.3s;
 }
 
@@ -33,10 +84,18 @@ img {
   color: #38bdf8 !important;
 }
 
+.navbar-toggler {
+  color: var(--primary-color) !important;
+}
+
+.navbar-toggler span {
+  color: var(--color) !important;
+}
+
 /* Hero Section */
 .hero {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a0f1c, #111827);
+  background: var(--base-color);
   padding-top: 80px;
   display: flex;
   align-items: center;
@@ -46,6 +105,7 @@ img {
 /* Glow Effect */
 .hero h1 {
   animation: fadeInDown 1.5s ease;
+  color: var(--text-color);
 }
 
 .hero p {
@@ -130,11 +190,11 @@ img {
 }
 
 .about {
-  background-color: #0f172a;
+  background-color: var(--base-variant);
 }
 
 .about-card {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--base-color);
   border-radius: 15px;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -152,7 +212,7 @@ img {
 
 .skills span {
   display: inline-block;
-  background: #1e293b;
+  background: var(--base-color);
   padding: 8px 15px;
   margin: 5px;
   border-radius: 20px;
@@ -171,8 +231,8 @@ img {
 /* ===== Skills Section ===== */
 .skills-section {
   padding: 100px 0;
-  background-color: #0f172a;
-  color: white;
+  background-color: var(--base-color);
+  color: var(--text-color);
 }
 .section-title {
   font-size: 36px;
@@ -186,7 +246,7 @@ img {
   display: flex;
   justify-content: space-between;
   margin-bottom: 8px;
-  color: #cbd5e1;
+  color: var(--text-color);
 }
 .progress-bar {
   width: 100%;
@@ -243,12 +303,12 @@ img {
 
 /* ===== Projects Section ===== */
 .projects {
-  background-color: #0a0f1c;
+  background-color: var(--base-variant);
   padding: 100px 0;
 }
 
 .project-card {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--base-color);
   border-radius: 15px;
   overflow: hidden;
   backdrop-filter: blur(10px);
@@ -274,7 +334,7 @@ img {
 }
 
 .project-card h5 {
-  color: white;
+  color: var(--text-color);
   font-weight: 600;
 }
 
@@ -284,7 +344,7 @@ img {
 
 .tech {
   display: inline-block;
-  background: #1e293b;
+  background: var(--base-variant);
   padding: 5px 12px;
   margin: 3px;
   border-radius: 15px;
@@ -294,8 +354,8 @@ img {
 /* ===== Contact Section ===== */
 /* ===== Contact Form ===== */
 .contact {
-  background-color: #0f172a;
-  color: #fff;
+  background-color: var(--base-color);
+  color: var(--text-color);
   padding: 100px 0;
 }
 
@@ -308,7 +368,7 @@ img {
 #contactForm {
   max-width: 600px;
   margin: 0 auto;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--base-variant);
   padding: 30px;
   border-radius: 15px;
   backdrop-filter: blur(10px);
@@ -322,13 +382,18 @@ img {
 }
 
 #contactForm .form-control {
-  background: rgba(255, 255, 255, 0.05);
-  color: #fff;
+  background: var(--base-color);
+  color: var(--text-color);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  /* border: 0; */
   border-radius: 10px;
   padding: 12px 15px;
   margin-bottom: 20px;
   transition: 0.3s;
+}
+
+#contactForm .form-control::placeholder {
+  color: var(--text-color);
 }
 
 #contactForm .form-control:focus {
@@ -358,6 +423,6 @@ img {
 }
 
 .footer {
-  background: #111827;
-  color: #94a3b8;
+  background: var(--base-variant);
+  color: var(--primary-color);
 }
